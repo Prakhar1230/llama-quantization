@@ -1,0 +1,28 @@
+## For model loading
+python scripts/download_model.py --model_name "TinyLlama/TinyLlama-1.1B-Chat-v1.0" --save_path "models/original"
+
+## For quantizing
+python scripts/quantize_model.py --input_path "models/original" --output_path "models/quantized" --quantization_method "dynamic" --calibration_samples 16
+
+## For testing quantized model 
+python scripts/run_evaluation.py --model_path "models/quantized" --output_path "results/evaluation.json" --num_samples 10
+
+## Prompt
+curl -X POST http://localhost:8000/inference -H "Content-Type: application/json" -d "{\"prompt\": \"What is machine learning?\", \"max_length\": 64, \"temperature\": 0.7}"
+
+
+# UTF error
+# In Windows Command Prompt or PowerShell:
+set PYTHONUTF8=1
+
+# Docker Build
+docker-compose up --build
+or
+docker build -t llm-quantization -f docker/Dockerfile .
+
+# Docker start
+docker run -it --rm --name llm_quant_temp -p 8000:8000 -v "%cd%\models:/app/models" -v "%cd%\results:/app/results" llm-quantization
+
+docker run -it --rm --name llm_quant_temp --memory=8g -p 8000:8000 -v "%cd%\models:/app/models" -v "%cd%\results:/app/results" llm-quantization
+# For other terminal
+docker exec -it llm_quant_temp /bin/bash

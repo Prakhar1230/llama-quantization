@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  llm-quantization:
+    build: 
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: llm-quantization-interactive
+    ports:
+      - "8000:8000"  # API port
+      - "8501:8501"  # Dashboard port
+    volumes:
+      - ./models:/app/models:ro  # Read-only model access
+      - ./results:/app/results:rw  # Results storage
+      - ./logs:/app/logs:rw  # Logs storage
+    environment:
+      - MODEL_PATH=/app/models/quantized
+      - PYTHONPATH=/app
+    stdin_open: true  # Keep STDIN open for interactive input
+    tty: true  # Allocate a pseudo-TTY
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 8G  # Adjust based on your system
+        reservations:
+          memory: 4G
+
+  # Optional: Separate dashboard service
+  dashboard:
+    build: 
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: llm-dashboard
+    ports:
+      - "8502:8501"  # Alternative dashboard port
+    volumes:
+      - ./models:/app/models:ro
+      - ./results:/app/results:ro
+    command: ["streamlit", "run", "/app/fixed_dashboard.py", "--server.port", "8501", "--server.address", "0.0.0.0"]
+    depends_on:
+      - llm-quantization
+    restart: unless-stopped
