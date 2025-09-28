@@ -1,0 +1,29 @@
+# Create the .gitignore file
+echo "# Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments  
+llama_quant/
+venv/
+env/
+
+# Project-specific exclusions
+docker/
+models/
+dashboard.py
+model_comparison_results.json
+
+# Large files
+*.pth
+*.pt
+*.ckpt
+*.bin
+*.safetensors
+
+# Data files
+*.csv
+*.json
+*.pkl
+*.pickle" > .gitignore
