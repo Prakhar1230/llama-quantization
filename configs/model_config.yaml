@@ -1,0 +1,32 @@
+# Model Configuration
+models:
+  small_llama:
+    name: "TinyLlama/TinyLlama-1.1B-Chat-v1.0"
+    size: "1.1B"
+    max_memory_gb: 3
+    recommended: true
+  
+  phi2:
+    name: "microsoft/phi-2"
+    size: "2.7B"
+    max_memory_gb: 6
+    recommended: true
+  
+  llama3_instruct:
+    name: "unsloth/llama-3-8b-Instruct-bnb-4bit"
+    size: "8B"
+    max_memory_gb: 8
+    recommended: false
+
+# Quantization settings
+quantization:
+  default_bits: 4
+  group_size: 128
+  calibration_samples: 128
+  max_sequence_length: 2048
+
+# Hardware constraints
+hardware:
+  max_ram_gb: 8
+  device: "cpu"
+  max_workers: 1

@@ -1,0 +1,153 @@
+# Quantization Configuration for CPU-Optimized LLM Pipeline
+
+# Quantization Methods
+quantization_methods:
+  gptq:
+    enabled: true
+    bits: 4
+    group_size: 128
+    desc_act: false
+    static_groups: false
+    sym: true
+    true_sequential: true
+    model_seqlen: 2048
+    block_name_to_quantize: "model.layers"
+    module_name_preceding_first_block: null
+    batch_size: 1
+    
+  bitsandbytes:
+    enabled: true
+    load_in_4bit: true
+    bnb_4bit_compute_dtype: "float16"
+    bnb_4bit_quant_type: "nf4"
+    bnb_4bit_use_double_quant: true
+    
+  # Dynamic quantization (PyTorch native)
+  dynamic:
+    enabled: true
+    qconfig_spec:
+      dtype: "qint8"
+      reduce_range: false
+
+# Calibration Dataset Settings
+calibration:
+  dataset_name: "wikitext"  # Options: wikitext, c4, custom
+  dataset_config: "wikitext-2-raw-v1"
+  split: "train"
+  num_samples: 128
+  max_sequence_length: 512
+  min_text_length: 50
+  
+  # Custom dataset path (if using custom)
+  custom_dataset_path: null
+  text_column: "text"
+
+# Model-Specific Settings
+model_settings:
+  max_memory_per_gpu: "0GB"  # CPU only
+  max_memory_cpu: "6GB"      # Leave 2GB for system
+  device_map: "cpu"
+  torch_dtype: "float32"     # CPU works better with float32
+  low_cpu_mem_usage: true
+  trust_remote_code: true
+
+# Performance Optimization
+performance:
+  num_workers: 1             # CPU cores to use
+  prefetch_factor: 2
+  pin_memory: false          # CPU deployment
+  persistent_workers: false
+  
+  # Memory management
+  gradient_checkpointing: true
+  empty_cache_steps: 10
+  max_split_size_mb: 512
+
+# Evaluation Settings
+evaluation:
+  enabled: true
+  metrics:
+    - "perplexity"
+    - "rouge"
+    - "bleu"
+    - "inference_time"
+    - "memory_usage"
+  
+  test_dataset: "wikitext"
+  test_samples: 50
+  max_eval_length: 128
+  
+  # Inference parameters for evaluation
+  inference_params:
+    temperature: 0.7
+    top_p: 0.9
+    max_new_tokens: 100
+    do_sample: true
+    pad_token_id: null  # Will be set automatically
+
+# Hardware Constraints
+hardware:
+  target_platform: "cpu"
+  max_ram_gb: 8
+  min_available_ram_gb: 2
+  cpu_optimization: true
+  
+  # CPU-specific optimizations
+  cpu_settings:
+    num_threads: null        # Use all available
+    inter_op_parallelism: 1
+    intra_op_parallelism: 4
+
+# Output Settings
+output:
+  save_quantized_model: true
+  save_tokenizer: true
+  save_config: true
+  save_quantization_report: true
+  
+  # Compression
+  compress_output: false     # Set to true to save disk space
+  
+  # Validation
+  validate_after_quantization: true
+  run_test_inference: true
+
+# Logging
+logging:
+  level: "INFO"
+  save_logs: true
+  log_file: "logs/quantization.log"
+  
+  # Progress tracking
+  show_progress_bar: true
+  log_memory_usage: true
+  log_timing: true
+
+# Safety and Error Handling
+safety:
+  max_quantization_time_hours: 2
+  memory_threshold_percent: 90  # Stop if memory usage exceeds this
+  auto_cleanup: true
+  backup_original: false         # Set to true if you want to keep backups
+  
+  # Validation thresholds
+  min_compression_ratio: 1.5     # Minimum acceptable compression
+  max_accuracy_drop_percent: 15  # Maximum acceptable accuracy drop
+
+# Advanced Settings
+advanced:
+  # Custom quantization functions
+  custom_quant_func: null
+  
+  # Experimental features
+  experimental:
+    mixed_precision: false
+    gradient_compression: false
+    activation_checkpointing: true
+    
+  # Debug settings
+  debug:
+    enabled: false
+    save_intermediate_models: false
+    profile_memory: true
+    detailed_timing: false
