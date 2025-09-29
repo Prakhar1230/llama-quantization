@@ -16,17 +16,20 @@ docker pull prakhar067/llama-quantization:latest
 
 Run the container interactively and execute the pipeline manually:
 
-```docker run -it --rm --entrypoint /bin/bash prakhar067/llama-quantization:latest
+```
+docker run -it --rm --entrypoint /bin/bash prakhar067/llama-quantization:latest
 ```
 Once inside the container, run the complete pipeline:
 
-```./run_pipeline.sh
+```
+./run_pipeline.sh
 ```
 ### Option 2: Direct Pipeline Execution
 
 Run the complete quantization pipeline automatically:
 
-```docker run -it --rm prakhar067/llama-quantization:latest
+```
+docker run -it --rm prakhar067/llama-quantization:latest
 ```
 
 This will automatically execute the full pipeline including:
