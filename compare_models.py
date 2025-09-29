@@ -14,7 +14,8 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import argparse
 import gc
-
+import warnings
+warnings.filterwarnings("ignore", message="TypedStorage is deprecated")
 
 class ModelComparer:
     """Compare original vs quantized models across multiple metrics."""
@@ -40,7 +41,7 @@ class ModelComparer:
             low_cpu_mem_usage=True
         )
         model.eval()
-        print("  -> Original model loaded successfully")
+        print("----> Original model loaded successfully\n")
         sys.stdout.flush()
         return model, tokenizer
     
@@ -63,19 +64,19 @@ class ModelComparer:
             model = torch.load(f"{model_path}/quantized_model.pt", map_location='cpu', weights_only=False)
         
         model.eval()
-        print("  -> Quantized model loaded successfully")
+        print("----> Quantized model loaded successfully\n")
         sys.stdout.flush()
         return model, tokenizer
     
     def cleanup_model(self, model, tokenizer, model_name):
         """Clean up model from memory."""
-        print(f"[CLEANUP] Freeing memory for {model_name} model...")
+        # print(f"[CLEANUP] Freeing memory for {model_name} model...")
         sys.stdout.flush()
         del model, tokenizer
         gc.collect()
         torch.cuda.empty_cache() if torch.cuda.is_available() else None
-        print(f"  -> {model_name} model memory freed")
-        sys.stdout.flush()
+        # print(f"  -> {model_name} model memory freed")
+        # sys.stdout.flush()
     
     def get_model_metrics(self, model, model_name, model_path):
         """Extract model size and parameter metrics."""
@@ -110,13 +111,13 @@ class ModelComparer:
                 "dtype": str(next(model.parameters()).dtype)
             }
             
-            print(f"  -> {model_name}: {param_count:,} params, {file_size_mb:.1f} MB")
+            print(f"---> {model_name}: {param_count:,} params, {file_size_mb:.1f} MB")
             sys.stdout.flush()
             
             return metrics
             
         except Exception as e:
-            print(f"  -> Error getting metrics for {model_name}: {e}")
+            print(f"----> Error getting metrics for {model_name}: {e}")
             sys.stdout.flush()
             return {"model_name": model_name, "error": str(e)}
     
@@ -128,22 +129,22 @@ class ModelComparer:
         inference_times = []
         tokens_per_second = []
         
-        # Reduced test set for faster execution
-        test_set = test_prompts[:3]  # Only 3 prompts instead of 5
         
+        test_set = test_prompts[:3]  
+        print(f"Testing prompts\n")
+        sys.stdout.flush()
         for i, prompt in enumerate(test_set):
             try:
-                print(f"  -> Testing prompt {i+1}/{len(test_set)}")
-                sys.stdout.flush()
                 
                 start_time = time.time()
                 
-                inputs = tokenizer(prompt, return_tensors="pt", truncation=True, max_length=64)  # Reduced max_length
+                inputs = tokenizer(prompt, return_tensors="pt", truncation=True, max_length=64, padding=True)  
                 
                 with torch.no_grad():
                     outputs = model.generate(
                         inputs['input_ids'],
-                        max_length=32,  # Reduced from 64
+                        attention_mask=inputs["attention_mask"],
+                        max_length=32,  
                         do_sample=False,
                         pad_token_id=tokenizer.eos_token_id,
                         num_beams=1
@@ -157,7 +158,7 @@ class ModelComparer:
                     tokens_per_second.append(tokens_per_sec)
                 
                 inference_times.append(inference_time)
-                print(f"     {inference_time:.2f}s, {tokens_per_sec:.1f} tok/s")
+                print(f"Prompt {i+1}/{len(test_set)}: {inference_time:.2f}s, {tokens_per_sec:.1f} tok/s")
                 sys.stdout.flush()
                 
             except Exception as e:
@@ -172,7 +173,7 @@ class ModelComparer:
             "successful_inferences": len(inference_times)
         }
         
-        print(f"  -> {model_name} avg: {result['avg_inference_time']:.2f}s, {result['avg_tokens_per_sec']:.1f} tok/s")
+        print(f"----> {model_name} avg: {result['avg_inference_time']:.2f}s, {result['avg_tokens_per_sec']:.1f} tok/s\n")
         sys.stdout.flush()
         
         return result
@@ -187,32 +188,35 @@ class ModelComparer:
         
         # Reduced test set for faster execution
         test_set = test_cases[:3]  # Only 3 test cases instead of 5
+        print(f"Testing Accuracy\n")
         
         for i, case in enumerate(test_set):
             try:
-                print(f"  -> Accuracy test {i+1}/{len(test_set)}")
-                sys.stdout.flush()
-                
+                                
                 prompt = case['prompt']
                 reference = case['reference']
                 
-                inputs = tokenizer(prompt, return_tensors="pt", truncation=True, max_length=64)  # Reduced
+                inputs = tokenizer(prompt, return_tensors="pt", truncation=True, max_length=64, padding=True)  # Reduced
                 
                 with torch.no_grad():
                     outputs = model.generate(
                         inputs['input_ids'],
                         max_length=48,  # Reduced from 96
                         do_sample=False,
-                        temperature=0.1,
+                        attention_mask=inputs["attention_mask"],
+                        # temperature=0.1,
                         pad_token_id=tokenizer.eos_token_id
                     )
                 
                 generated = tokenizer.decode(outputs[0], skip_special_tokens=True)
                 generated = generated[len(prompt):].strip()
                 
+                
+                rouge_l_score = 0.0
                 if len(generated) > 0:
                     # ROUGE scores
                     rouge_score = self.rouge_scorer.score(reference, generated)
+                    rouge_l_score = rouge_score['rougeL'].fmeasure
                     for metric in rouge_scores:
                         rouge_scores[metric].append(rouge_score[metric].fmeasure)
                     
@@ -224,11 +228,11 @@ class ModelComparer:
                         bleu = sentence_bleu([ref_tokens], gen_tokens, smoothing_function=self.smoothing.method1)
                         bleu_scores.append(bleu)
                 
-                print(f"     ROUGE-L: {rouge_score['rougeL'].fmeasure:.3f}")
+                print(f"Accuracy test {i+1}/{len(test_set)} ROUGE-L: {rouge_l_score:.3f}")
                 sys.stdout.flush()
                 
             except Exception as e:
-                print(f"     Error: {e}")
+                print(f"Error: {e}")
                 sys.stdout.flush()
                 continue
         
@@ -241,22 +245,21 @@ class ModelComparer:
             "successful_accuracy_tests": len(bleu_scores)
         }
         
-        print(f"  -> {model_name} avg ROUGE-L: {result['avg_rougeL']:.3f}")
+        print(f"\n----> {model_name} avg ROUGE-L: {result['avg_rougeL']:.3f}")
+        print(f"\n----> {model_name} avg BLEU: {result['avg_bleu']:.3f}\n")
         sys.stdout.flush()
         
         return result
     
     def memory_usage_test(self, model, tokenizer, model_name):
         """Test memory usage during inference."""
-        print(f"[MEMORY] Testing memory usage for {model_name}...")
-        sys.stdout.flush()
         
         # Get initial memory
         process = psutil.Process()
         initial_memory = process.memory_info().rss / (1024**2)
         
         # Run a few inferences and monitor memory
-        test_prompt = "What is AI?"  # Shorter prompt
+        test_prompt = "What do you understand by Artificial Intelligence?" 
         
         memory_samples = [initial_memory]
         
@@ -276,32 +279,20 @@ class ModelComparer:
             "memory_increase_mb": max(memory_samples) - initial_memory
         }
         
-        print(f"  -> {model_name} peak memory: {result['peak_memory_mb']:.1f} MB")
+        print(f"----> {model_name} peak memory: {result['peak_memory_mb']:.1f} MB")
         sys.stdout.flush()
         
         return result
     
     def create_test_cases(self):
-        """Create test cases for evaluation."""
-        return [
-            {
-                "prompt": "What is machine learning?",
-                "reference": "Machine learning is a subset of artificial intelligence that enables computers to learn from data."
-            },
-            {
-                "prompt": "Explain neural networks.",
-                "reference": "Neural networks are computing systems inspired by biological neural networks with interconnected nodes."
-            },
-            {
-                "prompt": "What is quantization?",
-                "reference": "Quantization reduces the precision of model parameters to lower bit-widths, reducing memory usage."
-            }
-        ]
+        """Returning test cases for evaluation."""
+        with open("prompts/test_cases.json", 'r') as f:
+            return json.load(f)
     
     def run_comprehensive_comparison(self, original_path, quantized_path):
         """Run complete comparison between original and quantized models."""
         print("=" * 80)
-        print("[START] COMPREHENSIVE MODEL COMPARISON")  # Fixed: removed emoji
+        print("[START] COMPREHENSIVE MODEL COMPARISON")  
         print("=" * 80)
         sys.stdout.flush()
         
@@ -313,11 +304,9 @@ class ModelComparer:
         
         try:
             # Test prompts - reduced set
-            test_prompts = [
-                "What is AI?",
-                "Explain ML.",
-                "How does quantization work?"
-            ]
+            test_prompts = []
+            with open("prompts/test_prompts.json", 'r') as f:
+                test_prompts = json.load(f)
             
             # Test cases for accuracy
             test_cases = self.create_test_cases()
@@ -383,11 +372,11 @@ class ModelComparer:
             # Generate comparison report
             self.generate_comparison_report(results)
             
-            print(f"\n[SUCCESS] Comparison completed! Results saved to 'model_comparison_results.json'")  # Fixed: removed emoji
+            print(f"\n[SUCCESS] Comparison completed! Results saved to 'model_comparison_results.json'")  
             sys.stdout.flush()
             
         except Exception as e:
-            print(f"[ERROR] Comparison failed: {e}")  # Fixed: removed emoji
+            print(f"[ERROR] Comparison failed: {e}")  
             sys.stdout.flush()
             
             # Cleanup in case of error
@@ -401,7 +390,7 @@ class ModelComparer:
     def generate_comparison_report(self, results):
         """Generate a comprehensive comparison report."""
         print("\n" + "=" * 80)
-        print("[REPORT] DETAILED COMPARISON REPORT")  # Fixed: removed emoji
+        print("[REPORT] DETAILED COMPARISON REPORT")  
         print("=" * 80)
         sys.stdout.flush()
         
@@ -445,7 +434,7 @@ class ModelComparer:
             print(f"{'Tokens/Second':<25} {orig_tps:<15.1f} {quant_tps:<15.1f} {tps_improvement:<14.1f}%")
             
             # Summary
-            print(f"\n[SUMMARY] QUANTIZATION RESULTS:")  # Fixed: removed emoji
+            print(f"\n[SUMMARY] QUANTIZATION RESULTS:")  
             print(f"-> File size reduced by: {size_reduction:.1f}%")
             print(f"-> Inference time improved by: {time_improvement:.1f}%")
             print(f"-> Speed increased by: {tps_improvement:.1f}%")
