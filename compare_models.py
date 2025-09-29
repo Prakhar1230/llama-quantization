@@ -138,16 +138,27 @@ class ModelComparer:
                 
                 start_time = time.time()
                 
-                inputs = tokenizer(prompt, return_tensors="pt", truncation=True, max_length=64, padding=True)  
+                inputs = tokenizer(prompt, return_tensors="pt", truncation=True, max_length=64)  
                 
                 with torch.no_grad():
+                    # outputs = model.generate(
+                    #     inputs['input_ids'],
+                    #     attention_mask=inputs["attention_mask"],
+                    #     max_length=32,  
+                    #     do_sample=False,
+                    #     pad_token_id=tokenizer.eos_token_id,
+                    #     num_beams=1
+                    # )
+                    
                     outputs = model.generate(
                         inputs['input_ids'],
                         attention_mask=inputs["attention_mask"],
-                        max_length=32,  
+                        max_length=48, 
                         do_sample=False,
-                        pad_token_id=tokenizer.eos_token_id,
-                        num_beams=1
+                        # temperature=0.3,
+                        # top_p=0.9,
+                        # repetition_penalty=1.1,
+                        pad_token_id=tokenizer.eos_token_id
                     )
                 
                 inference_time = time.time() - start_time
@@ -196,15 +207,26 @@ class ModelComparer:
                 prompt = case['prompt']
                 reference = case['reference']
                 
-                inputs = tokenizer(prompt, return_tensors="pt", truncation=True, max_length=64, padding=True)  # Reduced
+                inputs = tokenizer(prompt, return_tensors="pt", truncation=True, max_length=64)  # Redpadding=Trueuced
                 
                 with torch.no_grad():
+                    # outputs = model.generate(
+                    #     inputs['input_ids'],
+                    #     max_length=48,  # Reduced from 96
+                    #     do_sample=False,
+                    #     attention_mask=inputs["attention_mask"],
+                    #     # temperature=0.1,
+                    #     pad_token_id=tokenizer.eos_token_id
+                    # )
+                
                     outputs = model.generate(
                         inputs['input_ids'],
-                        max_length=48,  # Reduced from 96
-                        do_sample=False,
                         attention_mask=inputs["attention_mask"],
-                        # temperature=0.1,
+                        max_length=48,  
+                        do_sample=False,
+                        # temperature=0.3,  # Lower temp for accuracy tests
+                        # top_p=0.9,
+                        # repetition_penalty=1.1,
                         pad_token_id=tokenizer.eos_token_id
                     )
                 
@@ -266,8 +288,20 @@ class ModelComparer:
         for i in range(2):  # Reduced from 3 to 2
             inputs = tokenizer(test_prompt, return_tensors="pt")
             with torch.no_grad():
-                outputs = model.generate(inputs['input_ids'], max_length=32, do_sample=False)  # Reduced max_length
-            
+                outputs = model.generate(
+                    inputs['input_ids'],
+                    attention_mask=inputs["attention_mask"],
+                    max_length=48,
+                    do_sample=False,
+                    temperature=0.3,
+                    top_p=0.9,
+                    # repetition_penalty=1.1,
+                    pad_token_id=tokenizer.eos_token_id
+                )
+                
+                # outputs = model.generate(inputs['input_ids'], max_length=32, do_sample=False)  # Reduced max_length
+            del outputs
+            gc.collect()
             current_memory = process.memory_info().rss / (1024**2)
             memory_samples.append(current_memory)
         

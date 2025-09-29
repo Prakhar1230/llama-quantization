@@ -1,14 +1,14 @@
 [
     {
         "prompt": "What is machine learning?",
-        "reference": "Machine learning is a subset of artificial intelligence that enables computers to learn from data."
+        "reference": "Machine learning is a subset of artificial intelligence that enables computers to learn and improve from experience without being explicitly programmed. It uses algorithms to analyze data, identify patterns, and make predictions or decisions."
     },
     {
         "prompt": "Explain neural networks.",
-        "reference": "Neural networks are computing systems inspired by biological neural networks with interconnected nodes."
+        "reference": "Neural networks are computing systems inspired by biological neural networks. They consist of interconnected nodes that process information through weighted connections, learning to recognize patterns and make predictions by adjusting these weights during training."
     },
     {
         "prompt": "What is quantization?",
-        "reference": "Quantization reduces the precision of model parameters to lower bit-widths, reducing memory usage."
+        "reference": "Quantization is the process of converting infinite, continuous values into a finite set of discrete values. In machine learning, it reduces the precision of model parameters to lower-bit integers, which makes models smaller, faster, and more efficient for deployment on various devices. "
     }
 ]
