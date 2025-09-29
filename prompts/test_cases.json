@@ -1,0 +1,14 @@
+[
+    {
+        "prompt": "What is machine learning?",
+        "reference": "Machine learning is a subset of artificial intelligence that enables computers to learn from data."
+    },
+    {
+        "prompt": "Explain neural networks.",
+        "reference": "Neural networks are computing systems inspired by biological neural networks with interconnected nodes."
+    },
+    {
+        "prompt": "What is quantization?",
+        "reference": "Quantization reduces the precision of model parameters to lower bit-widths, reducing memory usage."
+    }
+]

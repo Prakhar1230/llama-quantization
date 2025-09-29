@@ -24,6 +24,5 @@ model_comparison_results.json
 
 # Data files
 *.csv
-*.json
 *.pkl
 *.pickle" > .gitignore
