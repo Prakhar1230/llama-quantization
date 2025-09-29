@@ -1,0 +1,47 @@
+{
+  "model_path": "models/quantized",
+  "evaluation_timestamp": "2025-09-26 14:01:48",
+  "model_type": "quantized",
+  "speed_metrics": {
+    "avg_inference_time": 3.470657229423523,
+    "median_inference_time": 3.470657229423523,
+    "std_inference_time": 0.04740583896636963,
+    "min_inference_time": 3.4232513904571533,
+    "max_inference_time": 3.5180630683898926,
+    "avg_tokens_per_second": 9.2218762086138,
+    "total_prompts_evaluated": 2
+  },
+  "accuracy_metrics": {
+    "avg_rouge1": 0.23313090418353577,
+    "avg_rouge2": 0.03636363636363636,
+    "avg_rougeL": 0.19804318488529016,
+    "avg_bleu": 0.009600172166188697,
+    "samples_evaluated": 2
+  },
+  "memory_metrics": {
+    "model_size_mb": 250.3515625,
+    "process_memory_mb": 2282.359375,
+    "available_memory_mb": 1007.125,
+    "memory_utilization_percent": 87.3
+  },
+  "evaluation_config": {
+    "dataset": "wikitext",
+    "num_samples": 10,
+    "max_length": 128,
+    "total_evaluation_time": 56.29494071006775
+  },
+  "system_info": {
+    "final_memory_usage": {
+      "rss_mb": 1257.1875,
+      "vms_mb": 1906.71484375,
+      "percent_used": 74.6,
+      "available_mb": 2012.87109375,
+      "total_mb": 7926.78515625
+    },
+    "peak_memory_diff": {
+      "rss_diff_mb": 833.625,
+      "vms_diff_mb": 1020.87890625,
+      "percent_diff": -12.600000000000009
+    }
+  }
+}
